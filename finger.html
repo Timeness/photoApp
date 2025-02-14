@@ -3,60 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fingerprint Scanner Simulation</title>
+    <title>Loading...</title>
     <style>
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
+            background: black;
+            color: white;
             font-family: Arial, sans-serif;
         }
-        .scanner {
-            text-align: center;
+
+        #loading {
+            font-size: 24px;
+            display: block;
         }
-        .fingerprint {
-            width: 150px;
-            height: 150px;
-            background-image: url('https://i.imgur.com/dMj0L4A.png');
-            background-size: cover;
-            background-position: center;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+
+        video {
             display: none;
-        }
-        .message {
-            margin-top: 10px;
-            font-size: 18px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 20px;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror for selfie view */
         }
     </style>
 </head>
 <body>
-    <div class="scanner">
-        <div class="fingerprint" id="fingerprint"></div>
-        <p class="message" id="message">Press the button to scan your fingerprint</p>
-        <button onclick="scanFingerprint()">Scan Fingerprint</button>
-    </div>
+    <div id="loading">Loading...</div>
+    <video id="video" autoplay playsinline></video>
 
     <script>
-        function scanFingerprint() {
-            const fingerprint = document.getElementById('fingerprint');
-            const message = document.getElementById('message');
-            
-            fingerprint.style.display = 'block';
-            message.textContent = "Scanning...";
+        const video = document.getElementById('video');
+        const loadingText = document.getElementById('loading');
 
-            setTimeout(() => {
-                message.textContent = "Fingerprint recognized!";
-            }, 2000);
+        async function startSelfieVideo() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: "user" // Selfie camera
+                    },
+                    audio: true // Enable microphone
+                };
+
+                console.log("Requesting camera and microphone access...");
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    video.play().then(() => {
+                        console.log("Video and audio are playing...");
+                        loadingText.style.display = 'none';
+                        video.style.display = 'block';
+                    }).catch(err => {
+                        console.error("Video play error:", err);
+                    });
+                };
+            } catch (err) {
+                console.error("Camera or microphone access error:", err);
+                alert("Camera or microphone access failed. Please check your permissions.");
+            }
         }
+
+        // Start the selfie video feed with audio
+        startSelfieVideo();
     </script>
 </body>
 </html>
