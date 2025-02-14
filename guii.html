@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Status</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const battery = await navigator.getBattery();
+            const batteryLevelElem = document.getElementById('battery-level');
+            const isChargingElem = document.getElementById('is-charging');
+            const lastChargingTimeElem = document.getElementById('last-charging-time');
+            const dischargingTimeElem = document.getElementById('discharging-time');
+
+            let lastChargingTime = null;
+            let dischargingTime = null;
+
+            function updateBatteryInfo() {
+                batteryLevelElem.textContent = `${Math.round(battery.level * 100)}%`;
+                isChargingElem.textContent = battery.charging ? 'True' : 'False';
+
+                if (battery.charging && !lastChargingTime) {
+                    lastChargingTime = new Date().toLocaleString();
+                } else if (!battery.charging && lastChargingTime) {
+                    dischargingTime = new Date().toLocaleString();
+                }
+
+                lastChargingTimeElem.textContent = lastChargingTime || 'N/A';
+                dischargingTimeElem.textContent = dischargingTime || 'N/A';
+            }
+
+            // Initial update
+            updateBatteryInfo();
+
+            // Event listeners for battery changes
+            battery.addEventListener('levelchange', updateBatteryInfo);
+            battery.addEventListener('chargingchange', updateBatteryInfo);
+        });
+    </script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white shadow-md rounded-lg p-8 max-w-sm w-full">
+            <h1 class="text-2xl font-bold mb-4 text-center">Battery Status</h1>
+            <p class="mb-2">Battery Level: <span id="battery-level">Loading...</span></p>
+            <p class="mb-2">Is Device Charging: <span id="is-charging">Loading...</span></p>
+            <p class="mb-2">Last Charging Time: <span id="last-charging-time">N/A</span></p>
+            <p class="mb-2">Discharging Time: <span id="discharging-time">N/A</span></p>
+        </div>
+    </div>
+</body>
+</html>
