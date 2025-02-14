@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selfie Photo Capture</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f2f2f2;
+            margin: 0;
+        }
+
+        #wrapper {
+            display: none;
+            text-align: center;
+        }
+
+        video {
+            border: 2px solid #000;
+            max-width: 100%;
+            transform: scaleX(-1); /* Mirror effect for selfie */
+        }
+
+        canvas {
+            display: block;
+            margin: 10px auto;
+            border: 2px solid #000;
+            max-width: 100%;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #msg {
+            color: red;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="msg">Loading Camera...</div>
+
+    <div id="wrapper">
+        <video autoplay playsinline></video>
+        <canvas></canvas>
+        <br>
+        <button id="newphoto">Take Photo</button>
+        <button id="download" disabled>Download Photo</button>
+    </div>
+
+    <script>
+        'use strict';
+
+        var message = {},
+            wrapper = {},
+            buttonNewPhoto = {},
+            buttonDownload = {},
+            video = {},
+            canvas = {};
+
+        function initElement() {
+            message = document.getElementById('msg');
+            wrapper = document.getElementById('wrapper');
+            buttonNewPhoto = document.getElementById('newphoto');
+            buttonDownload = document.getElementById('download');
+            video = document.querySelector('video');
+            canvas = document.querySelector('canvas');
+        }
+
+        function onTakeAPhoto() {
+            const context = canvas.getContext('2d');
+            // Use video.videoWidth and video.videoHeight for accurate size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            buttonDownload.removeAttribute('disabled');
+        }
+
+        function onDownloadPhoto() {
+            canvas.toBlob(function (blob) {
+                var link = document.createElement('a');
+                link.download = 'photo.jpg';
+                link.setAttribute('href', URL.createObjectURL(blob));
+                link.dispatchEvent(new MouseEvent('click'));
+            }, 'image/jpeg', 1);
+        }
+
+        function onLoadVideo() {
+            video.play();
+        }
+
+        function onMediaStream(stream) {
+            if ('srcObject' in video) {
+                video.srcObject = stream;
+            } else {
+                video.src = window.URL.createObjectURL(stream);
+            }
+
+            message.style.display = 'none';
+            wrapper.style.display = 'block';
+            buttonNewPhoto.addEventListener('click', onTakeAPhoto);
+            buttonDownload.addEventListener('click', onDownloadPhoto);
+            video.addEventListener('loadedmetadata', onLoadVideo);
+        }
+
+        function onMediaError(err) {
+            message.innerHTML = err.name + ': ' + err.message;
+        }
+
+        function initEvent() {
+            navigator.mediaDevices
+                .getUserMedia({ video: { facingMode: "user" }, audio: false })
+                .then(onMediaStream)
+                .catch(onMediaError);
+        }
+
+        function init() {
+            initElement();
+            initEvent();
+        }
+
+        if (window.location.protocol != 'https:' && window.location.protocol != 'file:') {
+            window.location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
