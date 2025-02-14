@@ -3,22 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FingerprintJS Demo</title>
+    <title>FingerprintJS - Detailed Info</title>
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background: #f0f2f5;
+        }
+        h1 {
+            color: #333;
         }
         pre {
-            background: #f4f4f9;
+            background: #fff;
             padding: 15px;
             border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+            max-height: 80vh;
         }
     </style>
 </head>
 <body>
-    <h1>FingerprintJS Demo</h1>
+    <h1>Detailed User Information</h1>
     <pre id="output">Loading...</pre>
 
     <script>
@@ -30,41 +37,67 @@
             const result = await fp.get();
             const components = result.components;
 
-            // Collecting Data
+            // Basic Details
             const data = {
                 VisitorId: result.visitorId,
                 UserAgent: navigator.userAgent,
                 Platform: navigator.platform,
                 Language: navigator.language,
                 ScreenResolution: `${screen.width} x ${screen.height}`,
+                ColorDepth: screen.colorDepth,
                 TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 LocalTime: new Date().toLocaleString(),
+                DeviceMemory: navigator.deviceMemory || 'Not Available',
+                HardwareConcurrency: navigator.hardwareConcurrency || 'Not Available',
                 TouchSupport: components.touchSupport.value,
                 AudioFingerprint: components.audio.value,
                 CanvasFingerprint: components.canvas.value,
-                DeviceMemory: navigator.deviceMemory || 'Not Available',
-                HardwareConcurrency: navigator.hardwareConcurrency || 'Not Available',
             };
 
-            // Displaying Data
-            document.getElementById('output').textContent = JSON.stringify(data, null, 4);
+            // Battery Information
+            if (navigator.getBattery) {
+                navigator.getBattery().then(battery => {
+                    data.BatteryLevel = `${Math.round(battery.level * 100)}%`;
+                    data.IsCharging = battery.charging;
+                    data.ChargingTime = battery.chargingTime ? `${battery.chargingTime} seconds` : 'N/A';
+                    data.DischargingTime = battery.dischargingTime ? `${battery.dischargingTime} seconds` : 'N/A';
+                    updateOutput();
+                });
+            }
+
+            // Network Information (Carrier Type)
+            if (navigator.connection) {
+                data.NetworkType = navigator.connection.effectiveType || 'Unknown';
+                data.Downlink = `${navigator.connection.downlink} Mbps`;
+            }
+
+            // Location (Requires User Permission)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        data.Location = `Latitude ${latitude}, Longitude ${longitude}`;
+                        updateOutput();
+                    },
+                    (error) => {
+                        console.warn("Location access denied.");
+                        data.Location = "Permission Denied";
+                        updateOutput();
+                    }
+                );
+            } else {
+                data.Location = "Not Supported";
+            }
+
+            // Update Output Function
+            function updateOutput() {
+                document.getElementById('output').textContent = JSON.stringify(data, null, 4);
+            }
+
+            updateOutput();
         }
 
         getFingerprintData();
-
-        // Get Location if Permission is Granted
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    document.getElementById('output').textContent += 
-                        `\nLocation: Latitude ${latitude}, Longitude ${longitude}`;
-                },
-                (error) => {
-                    console.warn("Location access denied.");
-                }
-            );
-        }
     </script>
 </body>
 </html>
