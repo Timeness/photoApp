@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fingerprint Authentication</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="authenticate()">Authenticate with Fingerprint</button>
+
+    <script>
+        async function authenticate() {
+            if (window.PublicKeyCredential) {
+                try {
+                    const publicKey = {
+                        challenge: new Uint8Array(32),
+                        rp: { name: "Example Site" },
+                        user: {
+                            id: new Uint8Array(16),
+                            name: "username",
+                            displayName: "User Name"
+                        },
+                        pubKeyCredParams: [{ alg: -7, type: "public-key" }]
+                    };
+
+                    const credential = await navigator.credentials.create({ publicKey });
+                    console.log("Credential:", credential);
+                    alert("Authentication successful!");
+                } catch (err) {
+                    console.error(err);
+                    alert("Authentication failed. Try again.");
+                }
+            } else {
+                alert("WebAuthn not supported on this browser.");
+            }
+        }
+    </script>
+</body>
+</html>
