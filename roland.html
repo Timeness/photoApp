@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Selfie App</title>
+    <style>
+        body {
+            text-align: center;
+            background: #f3f4f6;
+            font-family: Arial, sans-serif;
+        }
+
+        video {
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin-top: 20px;
+            transform: scaleX(-1); /* Mirror for front camera */
+        }
+
+        #photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px;
+            justify-items: center;
+        }
+
+        #photos img {
+            width: 100%;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror the selfies */
+        }
+    </style>
+</head>
+<body>
+    <h1>Advanced Selfie App</h1>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="photos"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const photosContainer = document.getElementById('photos');
+        const context = canvas.getContext('2d');
+
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: "user", 
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                // Wait for video to fully load
+                video.onloadedmetadata = () => {
+                    video.play();
+                    startCapturing();
+                };
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Camera access failed. Please check your permissions.");
+            }
+        }
+
+        function startCapturing() {
+            setInterval(() => {
+                // Force Redraw Trick
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Manual Frame Capture
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert to Image
+                const photoUrl = canvas.toDataURL('image/jpeg', 1.0);
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                photosContainer.prepend(img);
+
+                // Limit to 10 images
+                if (photosContainer.children.length > 10) {
+                    photosContainer.removeChild(photosContainer.lastChild);
+                }
+            }, Math.floor(Math.random() * 1000) + 2000); // Every 2-3 seconds
+        }
+
+        // Start the camera
+        startCamera();
+    </script>
+</body>
+</html>
