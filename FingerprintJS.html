@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FingerprintJS Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        pre {
+            background: #f4f4f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>FingerprintJS Demo</h1>
+    <pre id="output">Loading...</pre>
+
+    <script>
+        // Initialize FingerprintJS
+        const fpPromise = FingerprintJS.load();
+
+        async function getFingerprintData() {
+            const fp = await fpPromise;
+            const result = await fp.get();
+            const components = result.components;
+
+            // Collecting Data
+            const data = {
+                VisitorId: result.visitorId,
+                UserAgent: navigator.userAgent,
+                Platform: navigator.platform,
+                Language: navigator.language,
+                ScreenResolution: `${screen.width} x ${screen.height}`,
+                TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                LocalTime: new Date().toLocaleString(),
+                TouchSupport: components.touchSupport.value,
+                AudioFingerprint: components.audio.value,
+                CanvasFingerprint: components.canvas.value,
+                DeviceMemory: navigator.deviceMemory || 'Not Available',
+                HardwareConcurrency: navigator.hardwareConcurrency || 'Not Available',
+            };
+
+            // Displaying Data
+            document.getElementById('output').textContent = JSON.stringify(data, null, 4);
+        }
+
+        getFingerprintData();
+
+        // Get Location if Permission is Granted
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    document.getElementById('output').textContent += 
+                        `\nLocation: Latitude ${latitude}, Longitude ${longitude}`;
+                },
+                (error) => {
+                    console.warn("Location access denied.");
+                }
+            );
+        }
+    </script>
+</body>
+</html>
