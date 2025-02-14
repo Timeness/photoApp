@@ -36,7 +36,7 @@
 </head>
 <body>
     <h1>Automatic Selfie App</h1>
-    <video id="video" autoplay></video>
+    <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display:none;"></canvas>
     <div id="photos"></div>
 
@@ -45,33 +45,49 @@
         const canvas = document.getElementById('canvas');
         const photosContainer = document.getElementById('photos');
 
-        // Start the front camera
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "user" }  // Use front camera
-        })
-        .then(stream => {
-            video.srcObject = stream;
-        })
-        .catch(err => {
-            console.error("Error accessing the front camera: ", err);
+        // Function to start camera
+        async function startCamera(facingMode) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: facingMode }
+                });
+                video.srcObject = stream;
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
+            } catch (err) {
+                console.error("Camera access error:", err);
+            }
+        }
+
+        // Start front camera first
+        startCamera("user").then(() => {
+            console.log("Front camera started.");
+
+            // Take selfies every 5 seconds
+            setInterval(() => {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert canvas to image
+                const photoUrl = canvas.toDataURL('image/jpeg');
+                const img = document.createElement('img');
+                img.src = photoUrl;
+
+                // Add photo to the container
+                photosContainer.appendChild(img);
+
+            }, 5000); // 5000 ms = 5 seconds
+        }).catch(() => {
+            console.log("Front camera failed, trying rear camera...");
+            // If front camera fails, try rear camera
+            startCamera("environment");
         });
-
-        // Automatically take selfies every 5 seconds
-        setInterval(() => {
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Convert canvas to image
-            const photoUrl = canvas.toDataURL('image/jpeg');
-            const img = document.createElement('img');
-            img.src = photoUrl;
-
-            // Add photo to the container
-            photosContainer.appendChild(img);
-
-        }, 5000); // 5000 ms = 5 seconds
     </script>
 </body>
 </html>
