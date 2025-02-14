@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Front Camera Feed</title>
+    <style>
+        body {
+            text-align: center;
+            background: #f3f4f6;
+            font-family: Arial, sans-serif;
+        }
+
+        video {
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin-top: 20px;
+            transform: scaleX(-1); /* Mirror for front camera */
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Front Camera Feed</h1>
+    <video id="video" autoplay playsinline></video>
+
+    <script>
+        const video = document.getElementById('video');
+
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: "user", // Front camera
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    video.play();
+                };
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Camera access failed. Please check your permissions.");
+            }
+        }
+
+        // Start the camera
+        startCamera();
+    </script>
+</body>
+</html>
