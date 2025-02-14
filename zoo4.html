@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatic Selfie App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f3f4f6;
+        }
+
+        video {
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin-top: 20px;
+            transform: scaleX(-1); /* Mirror for front camera */
+        }
+
+        #photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px;
+            justify-items: center;
+        }
+
+        #photos img {
+            width: 100%;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror the selfies */
+        }
+    </style>
+</head>
+<body>
+    <h1>Automatic Selfie App</h1>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="photos"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const photosContainer = document.getElementById('photos');
+
+        // Check Camera Permissions Manually
+        async function checkPermissions() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const hasCamera = devices.some(device => device.kind === 'videoinput');
+                if (!hasCamera) {
+                    alert("No camera found on this device.");
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                console.error("Permission check failed:", err);
+                return false;
+            }
+        }
+
+        // Start Camera Function
+        async function startCamera(facingMode) {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: facingMode,
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+
+                    // Take selfies every 2-3 seconds
+                    setInterval(() => {
+                        const context = canvas.getContext('2d');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+
+                        // Clear and Refresh Canvas
+                        context.clearRect(0, 0, canvas.width, canvas.height);
+                        canvas.style.display = 'none'; // Force refresh
+
+                        // Draw Image on Canvas
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                        // Convert canvas to image
+                        const photoUrl = canvas.toDataURL('image/jpeg', 1.0);
+
+                        // Debug Log
+                        console.log("Captured Image URL:", photoUrl);
+
+                        // Create Image Element
+                        const img = document.createElement('img');
+                        img.src = photoUrl;
+                        photosContainer.prepend(img);
+
+                        // Limit to 10 images to avoid memory issues
+                        if (photosContainer.children.length > 10) {
+                            photosContainer.removeChild(photosContainer.lastChild);
+                        }
+                    }, Math.floor(Math.random() * 1000) + 2000); 
+                };
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Camera access failed. Please check your permissions.");
+            }
+        }
+
+        // Start the process
+        checkPermissions().then((isAllowed) => {
+            if (isAllowed) {
+                startCamera("user"); // Try front camera first
+            } else {
+                alert("Camera not accessible. Check your browser settings.");
+            }
+        });
+    </script>
+</body>
+</html>
