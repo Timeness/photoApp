@@ -44,50 +44,71 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const photosContainer = document.getElementById('photos');
+        let frontCameraId = null;
 
-        // Function to start camera
-        async function startCamera(facingMode) {
+        // Get camera list and select front camera
+        async function getFrontCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: facingMode }
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                // Try to find front camera by label
+                videoDevices.forEach(device => {
+                    if (device.label.toLowerCase().includes('front')) {
+                        frontCameraId = device.deviceId;
+                    }
                 });
-                video.srcObject = stream;
-                return new Promise((resolve) => {
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        resolve();
-                    };
-                });
+
+                // If no front camera found, use first video device
+                if (!frontCameraId && videoDevices.length > 0) {
+                    frontCameraId = videoDevices[0].deviceId;
+                }
+
+                if (frontCameraId) {
+                    startCamera(frontCameraId);
+                } else {
+                    alert("No camera found on this device.");
+                }
             } catch (err) {
-                console.error("Camera access error:", err);
+                console.error("Error getting devices:", err);
             }
         }
 
-        // Start front camera first
-        startCamera("user").then(() => {
-            console.log("Front camera started.");
+        // Start camera using deviceId
+        async function startCamera(deviceId) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { deviceId: { exact: deviceId } }
+                });
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
 
-            // Take selfies every 5 seconds
-            setInterval(() => {
-                const context = canvas.getContext('2d');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    // Start taking selfies every 5 seconds
+                    setInterval(() => {
+                        const context = canvas.getContext('2d');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Convert canvas to image
-                const photoUrl = canvas.toDataURL('image/jpeg');
-                const img = document.createElement('img');
-                img.src = photoUrl;
+                        // Convert canvas to image
+                        const photoUrl = canvas.toDataURL('image/jpeg');
+                        const img = document.createElement('img');
+                        img.src = photoUrl;
 
-                // Add photo to the container
-                photosContainer.appendChild(img);
+                        // Add photo to the container
+                        photosContainer.appendChild(img);
 
-            }, 5000); // 5000 ms = 5 seconds
-        }).catch(() => {
-            console.log("Front camera failed, trying rear camera...");
-            // If front camera fails, try rear camera
-            startCamera("environment");
-        });
+                    }, 5000); // 5000 ms = 5 seconds
+                };
+            } catch (err) {
+                console.error("Error starting camera:", err);
+                alert("Camera access failed. Please check your permissions.");
+            }
+        }
+
+        // Start the process
+        getFrontCamera();
     </script>
 </body>
 </html>
