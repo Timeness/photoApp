@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Front Camera Feed</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f3f4f6;
+        }
+
+        .camera-box {
+            width: 80vw;
+            max-width: 400px;
+            aspect-ratio: 3/4;
+            border: 5px solid #ccc;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror for front camera */
+        }
+    </style>
+</head>
+<body>
+    <div class="camera-box">
+        <video id="video" autoplay playsinline></video>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: "user", // Front camera
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    video.play();
+                };
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Camera access failed. Please check your permissions.");
+            }
+        }
+
+        // Start the camera
+        startCamera();
+    </script>
+</body>
+</html>
